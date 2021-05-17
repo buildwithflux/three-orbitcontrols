@@ -66,6 +66,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.panSpeed = 1.0;
 	this.screenSpacePanning = false; // if true, pan in screen-space
 	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
+	
+	// Set to true to zoom to cursor // panning may have to be enabled... // does it make sense for orbit controls?
+	this.zoomToCursor = false;
 
 	// Set to true to automatically rotate around the target
 	// If auto-rotate is enabled, you must call controls.update() in your animation loop
@@ -178,7 +181,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			spherical.makeSafe();
 
-
+			var prevRadius = spherical.radius;
 			spherical.radius *= scale;
 
 			// restrict radius to be between desired limits
@@ -195,6 +198,23 @@ THREE.OrbitControls = function ( object, domElement ) {
 				scope.target.add( panOffset );
 
 			}
+			
+			// suport zoomToCursor (mouse only)
+
+			if ( scope.zoomToCursor ) {
+
+				if ( scope.object.isPerspectiveCamera ) {
+
+					scope.target.lerp( mouse3D, 1 - spherical.radius / prevRadius );
+					
+				} else if ( scope.object.isOrthographicCamera ) {
+
+					scope.target.lerp( mouse3D, 1 - zoomFactor );
+
+				}
+
+			}
+
 
 			offset.setFromSpherical( spherical );
 
@@ -235,6 +255,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 				lastPosition.copy( scope.object.position );
 				lastQuaternion.copy( scope.object.quaternion );
 				zoomChanged = false;
+				zoomFactor = 1;
 
 				return true;
 
@@ -297,6 +318,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var scale = 1;
 	var panOffset = new THREE.Vector3();
 	var zoomChanged = false;
+	var zoomFactor = 1;
 
 	var rotateStart = new THREE.Vector2();
 	var rotateEnd = new THREE.Vector2();
@@ -309,6 +331,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var dollyStart = new THREE.Vector2();
 	var dollyEnd = new THREE.Vector2();
 	var dollyDelta = new THREE.Vector2();
+	
+	var mouse3D = new Vector3();
 
 	function getAutoRotationAngle() {
 
@@ -423,7 +447,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		} else if ( scope.object.isOrthographicCamera ) {
 
+			zoomFactor = scope.object.zoom;
 			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom * dollyScale ) );
+			zoomFactor /= scope.object.zoom
 			scope.object.updateProjectionMatrix();
 			zoomChanged = true;
 
@@ -444,7 +470,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		} else if ( scope.object.isOrthographicCamera ) {
 
+			zoomFactor = scope.object.zoom;
 			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom / dollyScale ) );
+			zoomFactor /= scope.object.zoom
 			scope.object.updateProjectionMatrix();
 			zoomChanged = true;
 
@@ -538,8 +566,61 @@ THREE.OrbitControls = function ( object, domElement ) {
 		// no-op
 
 	}
+	
+	var updateMouse3D = function () {
+
+		var v = new Vector3();
+		var v1 = new Vector3();
+
+		return function updateMouse3D( event ) {
+
+			var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+
+			if ( scope.object.isPerspectiveCamera ) {
+
+				v.set(
+				    ( event.clientX / element.clientWidth ) * 2 - 1,
+				    - ( event.clientY / element.clientHeight ) * 2 + 1,
+				    0.5 );
+				v.unproject( scope.object );
+
+				v.sub( scope.object.position ).normalize();
+
+				var distance = v1.copy( scope.target ).sub( scope.object.position ).dot( scope.object.up ) / v.dot( scope.object.up );
+
+				mouse3D.copy( scope.object.position ).add( v.multiplyScalar( distance ) );
+
+			} else if ( scope.object.isOrthographicCamera ) {
+
+				v.set(
+				    ( event.clientX / element.clientWidth ) * 2 - 1,
+				    - ( event.clientY / element.clientHeight ) * 2 + 1,
+				    ( scope.object.near + scope.object.far ) / ( scope.object.near - scope.object.far ) );
+
+				v.unproject( scope.object );
+
+				v1.set( 0, 0, - 1 ).applyQuaternion( scope.object.quaternion );
+
+				var distance = - v.dot( scope.object.up ) / v1.dot( scope.object.up )
+
+				mouse3D.copy( v ).add( v1.multiplyScalar( distance ) );
+
+			} else {
+
+				// camera neither orthographic nor perspective
+				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type.' );
+
+			}
+
+			//console.log( mouse3D );
+
+		};
+
+	}();
 
 	function handleMouseWheel( event ) {
+		
+		updateMouse3D( event );
 
 		if ( event.deltaY < 0 ) {
 
@@ -547,7 +628,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		} else if ( event.deltaY > 0 ) {
 
-			dollyIn( getZoomScale() );
+			dollyIn( getZoomScale() ); // fix - set mouse3D - dragging with middle mouse button
 
 		}
 
@@ -717,7 +798,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		dollyDelta.set( 0, Math.pow( dollyEnd.y / dollyStart.y, scope.zoomSpeed ) );
 
-		dollyIn( dollyDelta.y );
+		dollyIn( dollyDelta.y ); // fix - set mouse3D for zoom to cursor
 
 		dollyStart.copy( dollyEnd );
 
@@ -909,7 +990,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 				if ( scope.enableZoom === false ) return;
 
-				handleMouseMoveDolly( event );
+				handleMouseMoveDolly( event ); // fix zoom to cursor - dragging with middle mouse button - could be from alt key???
 
 				break;
 
@@ -1174,6 +1255,9 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.touches.ONE = THREE.TOUCH.PAN;
 	this.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+	
+	this.zoomToCursor = true;
+	this.maxPolarAngle = Math.PI / 3; // must be less than pi/2 when zoomToCursor is true
 
 };
 
