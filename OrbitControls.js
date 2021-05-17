@@ -569,8 +569,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 	
 	var updateMouse3D = function () {
 
-		var v = new Vector3();
-		var v1 = new Vector3();
+		var v = new THREE.Vector3();
+		var v1 = new THREE.Vector3();
 
 		return function updateMouse3D( event ) {
 
