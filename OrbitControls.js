@@ -332,7 +332,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var dollyEnd = new THREE.Vector2();
 	var dollyDelta = new THREE.Vector2();
 	
-	var mouse3D = new Vector3();
+	var mouse3D = new THREE.Vector3();
 
 	function getAutoRotationAngle() {
 
