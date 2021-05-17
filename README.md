@@ -1,3 +1,7 @@
+## Why did we fork this?
+
+So we could implemented Zoom to Cursor for mouse users
+
 **DEPRECATED**
 
 [three-js] exposes real modules now via three/examples/jsm/...
