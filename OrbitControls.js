@@ -66,7 +66,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	this.panSpeed = 1.0;
 	this.screenSpacePanning = false; // if true, pan in screen-space
 	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
-	
+
 	// Set to true to zoom to cursor // panning may have to be enabled... // does it make sense for orbit controls?
 	this.zoomToCursor = false;
 
@@ -198,7 +198,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 				scope.target.add( panOffset );
 
 			}
-			
+
 			// suport zoomToCursor (mouse only)
 
 			if ( scope.zoomToCursor ) {
@@ -206,10 +206,9 @@ THREE.OrbitControls = function ( object, domElement ) {
 				if ( scope.object.isPerspectiveCamera ) {
 
 					scope.target.lerp( mouse3D, 1 - spherical.radius / prevRadius );
-					
+
 				} else if ( scope.object.isOrthographicCamera ) {
-					console.log("1 - zoomFactor", 1 - zoomFactor)'
-					
+
 					scope.target.lerp( mouse3D, 1 - zoomFactor );
 
 				}
@@ -332,7 +331,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	var dollyStart = new THREE.Vector2();
 	var dollyEnd = new THREE.Vector2();
 	var dollyDelta = new THREE.Vector2();
-	
+
 	var mouse3D = new THREE.Vector3();
 
 	function getAutoRotationAngle() {
@@ -567,7 +566,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 		// no-op
 
 	}
-	
+
 	var updateMouse3D = function () {
 
 		var v = new THREE.Vector3();
@@ -592,19 +591,21 @@ THREE.OrbitControls = function ( object, domElement ) {
 				mouse3D.copy( scope.object.position ).add( v.multiplyScalar( distance ) );
 
 			} else if ( scope.object.isOrthographicCamera ) {
+				const viewportOffset = element.getBoundingClientRect();
+
+		    const offsetLeft = viewportOffset.left;
+		    const offsetTop = viewportOffset.top;
+		    const clientWidth = element.clientWidth;
+		    const clientHeight = element.clientHeight;
 
 				v.set(
-				    ( event.clientX / element.clientWidth ) * 2 - 1,
-				    - ( event.clientY / element.clientHeight ) * 2 + 1,
-				    ( scope.object.near + scope.object.far ) / ( scope.object.near - scope.object.far ) );
+				    ( (event.clientX - offsetLeft) / clientWidth) * 2 - 1,
+				    - ( (event.clientY - offsetTop) / clientHeight ) * 2 + 1,
+						0.001);
 
 				v.unproject( scope.object );
 
-				v1.set( 0, 0, - 1 ).applyQuaternion( scope.object.quaternion );
-
-				var distance = - v.dot( scope.object.up ) / v1.dot( scope.object.up )
-
-				mouse3D.copy( v ).add( v1.multiplyScalar( distance ) );
+				mouse3D.set( v.x, v.y, 0 ) //.add( v1.multiplyScalar( distance ) );
 
 			} else {
 
@@ -620,7 +621,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	}();
 
 	function handleMouseWheel( event ) {
-		
+
 		updateMouse3D( event );
 
 		if ( event.deltaY < 0 ) {
@@ -1256,7 +1257,7 @@ THREE.MapControls = function ( object, domElement ) {
 
 	this.touches.ONE = THREE.TOUCH.PAN;
 	this.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
-	
+
 	this.zoomToCursor = true;
 	this.maxPolarAngle = Math.PI / 3; // must be less than pi/2 when zoomToCursor is true
 
