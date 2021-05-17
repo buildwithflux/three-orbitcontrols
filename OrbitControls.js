@@ -208,7 +208,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 					scope.target.lerp( mouse3D, 1 - spherical.radius / prevRadius );
 					
 				} else if ( scope.object.isOrthographicCamera ) {
-
+					console.log("1 - zoomFactor", 1 - zoomFactor)'
+					
 					scope.target.lerp( mouse3D, 1 - zoomFactor );
 
 				}
