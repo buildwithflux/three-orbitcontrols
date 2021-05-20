@@ -576,18 +576,12 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
-			const viewportOffset = element.getBoundingClientRect();
-			const offsetLeft = viewportOffset.left;
-			const offsetTop = viewportOffset.top;
-			const clientWidth = element.clientWidth;
-			const clientHeight = element.clientHeight;
-
 			if ( scope.object.isPerspectiveCamera ) {
 
 				v.set(
-				    ( (event.clientX - offsetLeft) / clientWidth) * 2 - 1,
-				    - ( (event.clientY - offsetTop) / clientHeight ) * 2 + 1,
-						0.5);
+				    ( event.clientX / element.clientWidth ) * 2 - 1,
+				    - ( event.clientY / element.clientHeight ) * 2 + 1,
+				    0.5 );
 				v.unproject( scope.object );
 
 				v.sub( scope.object.position ).normalize();
@@ -597,6 +591,13 @@ THREE.OrbitControls = function ( object, domElement ) {
 				mouse3D.copy( scope.object.position ).add( v.multiplyScalar( distance ) );
 
 			} else if ( scope.object.isOrthographicCamera ) {
+				const viewportOffset = element.getBoundingClientRect();
+
+		    const offsetLeft = viewportOffset.left;
+		    const offsetTop = viewportOffset.top;
+		    const clientWidth = element.clientWidth;
+		    const clientHeight = element.clientHeight;
+
 				v.set(
 				    ( (event.clientX - offsetLeft) / clientWidth) * 2 - 1,
 				    - ( (event.clientY - offsetTop) / clientHeight ) * 2 + 1,
